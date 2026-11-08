@@ -1,0 +1,52 @@
+services:
+  # MQTT Broker (Eclipse Mosquitto 2.0)
+  mosquitto:
+    image: eclipse-mosquitto:2.0
+    container_name: smart-irrigation-mosquitto
+    restart: unless-stopped
+    ports:
+      - "1883:1883"
+      - "9001:9001"
+    volumes:
+      - ./mosquitto/config:/mosquitto/config
+      - mosquitto_data:/mosquitto/data
+      - mosquitto_log:/mosquitto/log
+
+  # Persistent Database (PostgreSQL 18)
+  postgres:
+    image: postgres:18-alpine
+    container_name: smart-irrigation-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: smart_irrigation
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgrespassword
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/init.sql:/docker-entrypoint-initdb.d/init.sql
+
+  # Backend Service (Go Ingestion & REST API)
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: smart-irrigation-backend
+    restart: unless-stopped
+    depends_on:
+      - postgres
+      - mosquitto
+    environment:
+      PORT: "8080"
+      DATABASE_URL: "postgres://postgres:postgrespassword@postgres:5432/smart_irrigation?sslmode=disable"
+      MQTT_BROKER: "mosquitto"
+      MQTT_PORT: "1883"
+      MQTT_CLIENT_ID: "smart-pot-backend-service"
+    ports:
+      - "8080:8080"
+
+volumes:
+  postgres_data:
+  mosquitto_data:
+  mosquitto_log:

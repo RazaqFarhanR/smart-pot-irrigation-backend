@@ -1,0 +1,25 @@
+# Binaries & Build Output
+bin/
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test & Coverage
+*.out
+*.test
+coverage.txt
+
+# Environment & Credentials
+.env
+.env.local
+*.secret
+
+# IDEs
+.vscode/
+.idea/
+
+# OS Files
+.DS_Store
+Thumbs.db
